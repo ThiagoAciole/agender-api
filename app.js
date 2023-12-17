@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { Client } = require("pg");
-
+const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -17,8 +17,9 @@ const pgConfig = {
 const client = new Client(pgConfig);
 client.connect();
 
-// Middleware para permitir requisições JSON
 app.use(bodyParser.json());
+
+app.use(cors());
 
 // Rota para obter um horário específico
 app.get("/horarios/data/:id", async (req, res) => {
