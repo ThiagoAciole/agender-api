@@ -202,6 +202,55 @@ app.put("/horarios/:data", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Rota para alterar a data de um horário específico
+app.put("/horario/:id/data", async (req, res) => {
+  const { id } = req.params;
+  const { novaData } = req.body;
+
+  try {
+    // Verifica se o horário existe
+    const horarioExistente = await client.query(
+      "SELECT * FROM horario WHERE id = $1",
+      [id]
+    );
+
+    if (horarioExistente.rows.length === 0) {
+      res.status(404).json({ error: "Horário não encontrado." });
+      return;
+    }
+
+    // Verifica se a data já existe na tabela "data"
+    const dataExistente = await client.query(
+      "SELECT * FROM data WHERE data = $1",
+      [novaData]
+    );
+
+    let dataId;
+
+    // Se a data não existir, cria a nova data
+    if (dataExistente.rows.length === 0) {
+      const result = await client.query(
+        "INSERT INTO data (data) VALUES ($1) RETURNING id",
+        [novaData]
+      );
+      dataId = result.rows[0].id;
+    } else {
+      dataId = dataExistente.rows[0].id;
+    }
+
+    // Atualiza a data do horário
+    const result = await client.query(
+      "UPDATE horario SET data = $1 WHERE id = $2 RETURNING *",
+      [novaData, id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 // Rota para excluir todos os horários de uma data específica
 app.delete("/horarios/:data", async (req, res) => {
